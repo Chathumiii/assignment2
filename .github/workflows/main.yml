@@ -20,8 +20,10 @@ on:
     - app/**
     
 env:
-  WORKING_DIR: app/
-  AWS_REGION: us-east-1
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY_WEB: docker-containers-app
+        ECR_REPOSITORY_DB: docker-containers-db
+        IMAGE_TAG: v0.1
   
 jobs:
   deploy:
@@ -53,7 +55,11 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: "v0.1"
       run: |
-        docker build -t $ECR_REGISTRY/${DATABASE_ECR_PREFIX}-${ECR_REPOSITORY}:${IMAGE_TAG} -f Dockerfile_mysql .
-        docker build -t $ECR_REGISTRY/${APPLICATION_ECR_PREFIX}-${ECR_REPOSITORY}:${IMAGE_TAG} .
-        docker push $ECR_REGISTRY/${DATABASE_ECR_PREFIX}-${ECR_REPOSITORY}:${IMAGE_TAG}
-        docker push $ECR_REGISTRY/${APPLICATION_ECR_PREFIX}-${ECR_REPOSITORY}:${IMAGE_TAG}
+        ls -ltra
+        # Docker build
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_WEB:$IMAGE_TAG .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_DB:$IMAGE_TAG -f Dockerfile_mysql .
+        
+        # Docer push
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_WEB:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_DB:$IMAGE_TAG
