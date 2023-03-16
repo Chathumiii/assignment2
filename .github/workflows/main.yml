@@ -3,8 +3,18 @@ name: Deploy to ECR
 on: 
   push:
     branches: [ main ]
+    
+env:
+  WORKING_DIR: app/
+  AWS_REGION: us-east-1
 
 jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{env.WORKING_DIR}}
   
   build:
     
