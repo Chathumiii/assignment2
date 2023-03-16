@@ -1,13 +1,28 @@
 name: Deploy to ECR
 
-on: 
+on:
+  workflow_dispatch:
+    branches:
+    - main
+    paths:
+    - app/**
+  
   push:
-    branches: [ main ]
+    branches:
+    - main
+    paths:
+    - app/**
+
+  pull_request:
+    branches:
+    - main
+    paths:
+    - app/**
     
 env:
   WORKING_DIR: app/
   AWS_REGION: us-east-1
-
+  
 jobs:
   deploy:
     name: Deploy
@@ -15,39 +30,30 @@ jobs:
     defaults:
       run:
         working-directory: ${{env.WORKING_DIR}}
-  
-  build:
     
-    name: Build Image
-    runs-on: ubuntu-latest
-
-   
     steps:
-
-    - name: Check out code
-      uses: actions/checkout@v2
-
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ env.AWS_REGION }}
+        
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-        AWS_REGION: us-east-1
-
-    - name: Build, test, tag, and push images to Amazon ECR
+    
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY_WEB: docker-containers-app
-        ECR_REPOSITORY_DB: docker-containers-db
-        IMAGE_TAG: v0.1
+        IMAGE_TAG: "v0.1"
       run: |
-        ls -ltra
-        # Docker build
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_WEB:$IMAGE_TAG .
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_DB:$IMAGE_TAG -f Dockerfile_mysql .
-        
-        # Docer push
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY_WEB:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY_DB:$IMAGE_TAG
+        docker build -t $ECR_REGISTRY/${DATABASE_ECR_PREFIX}-${ECR_REPOSITORY}:${IMAGE_TAG} -f Dockerfile_mysql .
+        docker build -t $ECR_REGISTRY/${APPLICATION_ECR_PREFIX}-${ECR_REPOSITORY}:${IMAGE_TAG} .
+        docker push $ECR_REGISTRY/${DATABASE_ECR_PREFIX}-${ECR_REPOSITORY}:${IMAGE_TAG}
+        docker push $ECR_REGISTRY/${APPLICATION_ECR_PREFIX}-${ECR_REPOSITORY}:${IMAGE_TAG}
