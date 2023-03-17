@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: application
+  labels:
+    app: employees
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: employees
+  template:
+    metadata:
+      labels:
+        app: employees
+    spec:
+      containers:
+        - name: docker-container-app
+          image: 244069240907.dkr.ecr.us-east-1.amazonaws.com/docker-containers-app:v1.0
+          env:
+            - name: DBPWD
+              value: password
+            - name: DBUSER
+              value: root
+            - name: DBHOST
+              value: "mysql.database.svc.cluster.local"
+            - name: DBPORT
+              value: "3306"
+          ports:
+            - containerPort: 8080
