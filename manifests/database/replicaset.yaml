@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: ReplicaSet
 metadata:
   name: mysql
   labels:
@@ -16,10 +16,10 @@ spec:
         component: db
     spec:
       containers:
-        - name: docker-containers-db
+        - name: mysql-container
           image: 244069240907.dkr.ecr.us-east-1.amazonaws.com/docker-containers-db:v1.0
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: password
+              value: passsword
           ports:
             - containerPort: 3306
